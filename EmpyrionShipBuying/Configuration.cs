@@ -15,6 +15,14 @@ namespace EmpyrionShipBuying
     {
         public PVector3 rot { get; set; }
     }
+
+    public enum TransactionType
+    {
+        Catalog,
+        PlayerToPlayer,
+        OneTimeSell
+    }
+
     public class Configuration
     {
         [JsonConverter(typeof(StringEnumConverter))]
@@ -37,7 +45,8 @@ namespace EmpyrionShipBuying
             public double Price { get; set; }
             public string Seller { get; set; }
             public string SellerSteamId { get; set; }
-            public bool OnetimeTransaction { get; set; }
+            [JsonConverter(typeof(StringEnumConverter))]
+            public TransactionType TransactionType { get; set; }
             public PlayfieldPositionRotation SpawnLocation { get; set; }
             public PlayfieldPosition BuyLocation { get; set; }
         }

@@ -35,9 +35,10 @@ namespace EmpyrionShipBuying
             ChatCommands.Add(new ChatCommand(@"ship help",                                     (I, A) => DisplayCatalog(I.playerId), "display help"));
             ChatCommands.Add(new ChatCommand(@"ship catalog",                                  (I, A) => DisplayHelp(I.playerId, S => true), "display help with full catalog"));
             ChatCommands.Add(new ChatCommand(@"ship buy (?<number>\d*)",                       (I, A) => ShipBuy (I, A, true), "buy the ship with the (number)"));
-            ChatCommands.Add(new ChatCommand(@"ship sell (?<id>\d+) (?<price>\d+)",            (I, A) => ShipSell(I, A, true), "sell the ship with id (id) from your position", Configuration.Current.SellPermission));
+            ChatCommands.Add(new ChatCommand(@"ship sell (?<id>\d+) (?<price>\d+)",            (I, A) => ShipSell(I, A, TransactionType.PlayerToPlayer), "sell the ship with id (id) from your position", Configuration.Current.SellPermission));
             ChatCommands.Add(new ChatCommand(@"ship cancel (?<number>\d+)",                    (I, A) => ShipBuy (I, A, false), "get your ship back", Configuration.Current.SellPermission));
-            ChatCommands.Add(new ChatCommand(@"ship add (?<id>\d+) (?<price>\d+)",             (I, A) => ShipSell(I, A, false), "add the ship with id (id) from your position to the catalog", Configuration.Current.AddPermission));
+            ChatCommands.Add(new ChatCommand(@"ship add (?<id>\d+) (?<price>\d+)",             (I, A) => ShipSell(I, A, TransactionType.Catalog), "add the ship with id (id) from your position to the catalog", Configuration.Current.AddPermission));
+//            ChatCommands.Add(new ChatCommand(@"ship addstarter (?<id>\d+) (?<price>\d+)",      (I, A) => ShipSell(I, A, TransactionType.OneTimeSell), "add the ship with id (id) from your position to the catalog", Configuration.Current.AddPermission));
             ChatCommands.Add(new ChatCommand(@"ship rename (?<number>\d+) (?<name>.+)",        (I, A) => ShipRename(I, A), "rename the ship with id (id) in the catalog", Configuration.Current.AddPermission));
             ChatCommands.Add(new ChatCommand(@"ship price (?<number>\d+) (?<price>\d+)",       (I, A) => ShipPrice(I, A), "set new price of the ship with id (id) in the catalog", Configuration.Current.AddPermission));
             ChatCommands.Add(new ChatCommand(@"ship profit",                                   (I, A) => ShipGetSaleProfit(I), "get your sale profit"));
@@ -186,7 +187,7 @@ namespace EmpyrionShipBuying
 
             log($"Ship buy {buyship.DisplayName} at {buyship.BuyLocation.playfield} complete", LogLevel.Message);
 
-            if (buyship.OnetimeTransaction) {
+            if (buyship.TransactionType == TransactionType.PlayerToPlayer) {
                 Configuration.Current.Ships.Remove(buyship);
 
                 if (buy)
@@ -248,7 +249,7 @@ namespace EmpyrionShipBuying
             return Math.Sqrt(Math.Pow(pos1.x - pos2.x, 2) + Math.Pow(pos1.y - pos2.y, 2) + Math.Pow(pos1.z - pos2.z, 2));
         }
 
-        private async Task ShipSell(ChatInfo chatinfo, Dictionary<string, string> arguments, bool onetimeTransaction)
+        private async Task ShipSell(ChatInfo chatinfo, Dictionary<string, string> arguments, TransactionType transactionType)
         {
             var P = await Request_Player_Info(chatinfo.playerId.ToId());
 
@@ -277,7 +278,7 @@ namespace EmpyrionShipBuying
                 return;
             }
 
-            var answer = await ShowDialog(chatinfo.playerId, P, $"Are you sure you want to {(onetimeTransaction ? "sell" : "add")}", $"[c][00ff00]\"{ship.name}\"[-][/c] for [c][ffffff]{price}[-][/c] Credits?", "Yes", "No");
+            var answer = await ShowDialog(chatinfo.playerId, P, $"Are you sure you want to {(transactionType == TransactionType.PlayerToPlayer ? "sell" : "add")}", $"[c][00ff00]\"{ship.name}\"[-][/c] for [c][ffffff]{price}[-][/c] Credits?", "Yes", "No");
             if (answer.Id != P.entityId || answer.Value != 0) return;
 
             log($"Ship sell {ship.id}/{ship.name} at {P.playfield} start", LogLevel.Message);
@@ -290,11 +291,11 @@ namespace EmpyrionShipBuying
                 Price               = price,
                 EntityType          = (EntityType)ship.type,
                 Seller              = P.playerName,
-                SellerSteamId            = onetimeTransaction ? P.steamId : string.Empty,
+                SellerSteamId       = transactionType == TransactionType.PlayerToPlayer ? P.steamId : string.Empty,
                 StructureDirectoryOrEPBName = Path.GetFileName(targetDataDir),
                 SpawnLocation       = new PlayfieldPositionRotation() { playfield = P.playfield, pos = ship.pos, rot = ship.rot },
                 BuyLocation         = new PlayfieldPosition        () { playfield = P.playfield, pos = P.pos },
-                OnetimeTransaction  = onetimeTransaction,
+                TransactionType     = transactionType,
                 ShipDetails         = $"{(EntityType)ship.type} Class:{ship.classNr} Blocks:{ship.cntBlocks} Devices:{ship.cntDevices} Lights:{ship.cntLights} Triangles:{ship.cntTriangles}"
             });
 
