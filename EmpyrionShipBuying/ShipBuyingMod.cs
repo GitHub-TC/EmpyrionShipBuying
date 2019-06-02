@@ -164,7 +164,7 @@ namespace EmpyrionShipBuying
 
             var buyship = shipsToBuyFromPosition[number];
 
-            if (!buy && buyship.SellerId == P.steamId) buyship.Price = (buyship.Price * Configuration.Current.CancelPercentageSaleFee) / 100;
+            if (!buy && buyship.SellerSteamId == P.steamId) buyship.Price = (buyship.Price * Configuration.Current.CancelPercentageSaleFee) / 100;
 
             if (P.credits < buyship.Price)
             {
@@ -191,8 +191,8 @@ namespace EmpyrionShipBuying
 
                 if (buy)
                 {
-                    if (!Configuration.Current.SaleProfits.ContainsKey(buyship.SellerId)) Configuration.Current.SaleProfits.Add(buyship.SellerId, buyship.Price);
-                    else Configuration.Current.SaleProfits[buyship.SellerId] = Configuration.Current.SaleProfits[buyship.SellerId] + buyship.Price;
+                    if (!Configuration.Current.SaleProfits.ContainsKey(buyship.SellerSteamId)) Configuration.Current.SaleProfits.Add(buyship.SellerSteamId, buyship.Price);
+                    else Configuration.Current.SaleProfits[buyship.SellerSteamId] = Configuration.Current.SaleProfits[buyship.SellerSteamId] + buyship.Price;
                 }
 
                 try { Directory.Delete(Path.Combine(EmpyrionConfiguration.SaveGameModPath, "ShipsData", buyship.StructureDirectoryOrEPBName), true); } catch { }
@@ -290,7 +290,7 @@ namespace EmpyrionShipBuying
                 Price               = price,
                 EntityType          = (EntityType)ship.type,
                 Seller              = P.playerName,
-                SellerId            = onetimeTransaction ? P.steamId : string.Empty,
+                SellerSteamId            = onetimeTransaction ? P.steamId : string.Empty,
                 StructureDirectoryOrEPBName = Path.GetFileName(targetDataDir),
                 SpawnLocation       = new PlayfieldPositionRotation() { playfield = P.playfield, pos = ship.pos, rot = ship.rot },
                 BuyLocation         = new PlayfieldPosition        () { playfield = P.playfield, pos = P.pos },
@@ -357,7 +357,7 @@ namespace EmpyrionShipBuying
                         .Aggregate(new { count = 0, line = "" }, (o, s) => new
                         {
                             count = o.count + 1,
-                            line  = o.line + $"[c][00ffff]{o.count + 1}:[-][/c] [c][ffffff][{s.EntityType}][-][/c] [c][00ff00]\"{s.DisplayName}\"[-][/c]{(string.IsNullOrEmpty(s.SellerId) ? "" : $" from [c][00ff00]{s.Seller}[-][/c]")} to buy at [[c][ff00ff]X:{(int)s.BuyLocation.pos.x} Y:{(int)s.BuyLocation.pos.y} Z:{(int)s.BuyLocation.pos.z}[-][/c]] for [c][ffffff]{s.Price}[-][/c] credits\n"
+                            line  = o.line + $"[c][00ffff]{o.count + 1}:[-][/c] [c][ffffff][{s.EntityType}][-][/c] [c][00ff00]\"{s.DisplayName}\"[-][/c]{(string.IsNullOrEmpty(s.SellerSteamId) ? "" : $" from [c][00ff00]{s.Seller}[-][/c]")} to buy at [[c][ff00ff]X:{(int)s.BuyLocation.pos.x} Y:{(int)s.BuyLocation.pos.y} Z:{(int)s.BuyLocation.pos.z}[-][/c]] for [c][ffffff]{s.Price}[-][/c] credits\n"
                         })
                         .line)
             );

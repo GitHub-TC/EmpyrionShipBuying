@@ -36,7 +36,7 @@ namespace EmpyrionShipBuying
             public string ShipDetails { get; set; }
             public double Price { get; set; }
             public string Seller { get; set; }
-            public string SellerId { get; set; }
+            public string SellerSteamId { get; set; }
             public bool OnetimeTransaction { get; set; }
             public PlayfieldPositionRotation SpawnLocation { get; set; }
             public PlayfieldPosition BuyLocation { get; set; }
