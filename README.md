@@ -37,6 +37,8 @@ Die Kommandos funktionieren NUR im Fraktionschat!
 * \\ship sell &lt;id&gt; &lt;price&gt; =&gt; Verkauft das Schiff mit der Id &lt;id&gt; und seinem ganzen Inhalt zu dem Preis &lt;price&gt;
 * \\ship cancel &lt;number&gt; =&gt; Zieht den Verkauf des Schiffes an der Position &lt;number&gt; zurück. Hierbei fallen "Transaktionsgebühren" in Höhe von 10% an
 * \\ship add &lt;id&gt; &lt;price&gt; =&gt; Stellt das das Schiff mit der Id &lt;id&gt; und seinem ganzen Inhalt zu dem Preis &lt;price&gt; in den Verkaufskatalog so das dies mehrfach gekauft werden kann
+* \\ship rename &lt;number&gt; &lt;name&gt; =&gt; Setzt den Namen des Schiffes mit der Nummer &lt;number&gt;
+* \\ship price &lt;number&gt; &lt;price&gt; =&gt; Setzt den Preis des Schiffes mit der Nummer &lt;number&gt;
 * \\ship profit =&gt; Transferiert den Gewinn der aus den Schiffsverkäufen erzielt wurde.
 
 #### Schiffe via EPB Datei anbieten
@@ -110,6 +112,8 @@ The commands work ONLY in the fractional vote!
 * \\ship sell &lt;id&gt; &lt;price&gt; =&gt; Sold the ship with Id &lt;id&gt; and all its content at the price &lt;price&gt;
 * \\ship cancel &lt;number&gt; =&gt; Attracts the sale of the ship at the position &lt;number&gt; back. In this case, "transaction fees" amounting to 10%
 * \\ship add &lt;id&gt; &lt;price&gt; =&gt; Does that put the ship with Id &lt;id&gt; and all its content at the price &lt;price&gt; in the sales catalog so that this can be bought several times
+* \\ship rename &lt;number&gt; &lt;name&gt; =&gt; Set the name of the ship with the number &lt;number&gt;
+* \\ship price &lt;number&gt; &lt;price&gt; =&gt; Set the price of the ship with the number &lt;number&gt;
 * \\ship profit =&gt; Transfers the profit made from ship sales.
 
 #### Offer ships via EPB file

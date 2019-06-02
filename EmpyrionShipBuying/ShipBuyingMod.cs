@@ -38,7 +38,77 @@ namespace EmpyrionShipBuying
             ChatCommands.Add(new ChatCommand(@"ship sell (?<id>\d+) (?<price>\d+)",            (I, A) => ShipSell(I, A, true), "sell the ship with id (id) from your position", Configuration.Current.SellPermission));
             ChatCommands.Add(new ChatCommand(@"ship cancel (?<number>\d+)",                    (I, A) => ShipBuy (I, A, false), "get your ship back", Configuration.Current.SellPermission));
             ChatCommands.Add(new ChatCommand(@"ship add (?<id>\d+) (?<price>\d+)",             (I, A) => ShipSell(I, A, false), "add the ship with id (id) from your position to the catalog", Configuration.Current.AddPermission));
+            ChatCommands.Add(new ChatCommand(@"ship rename (?<number>\d+) (?<name>.+)",        (I, A) => ShipRename(I, A), "rename the ship with id (id) in the catalog", Configuration.Current.AddPermission));
+            ChatCommands.Add(new ChatCommand(@"ship price (?<number>\d+) (?<price>\d+)",       (I, A) => ShipPrice(I, A), "set new price of the ship with id (id) in the catalog", Configuration.Current.AddPermission));
             ChatCommands.Add(new ChatCommand(@"ship profit",                                   (I, A) => ShipGetSaleProfit(I), "get your sale profit"));
+        }
+
+        private async Task ShipPrice(ChatInfo chatinfo, Dictionary<string, string> arguments)
+        {
+            if (int.TryParse(arguments["price"], out int price)) return;
+
+            var P = await Request_Player_Info(chatinfo.playerId.ToId());
+
+            var shipsToBuyFromPosition = Configuration.Current.Ships
+                .OrderBy(S => S.EntityType)
+                .OrderBy(S => S.DisplayName)
+                .Where(S => Distance(S.BuyLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance).ToArray();
+
+            if (shipsToBuyFromPosition.Length == 0)
+            {
+                InformPlayer(chatinfo.playerId, $"no ships available from this position prease go to a 'ship buy position'");
+                log($"Ship buy at wrong position {P.playfield} [X:{P.pos.x} Y:{P.pos.y} Z:{P.pos.z}] start", LogLevel.Message);
+                return;
+            }
+
+            if (int.TryParse(arguments["number"], out int number))
+            {
+                if (number <= 0 || number > shipsToBuyFromPosition.Length)
+                {
+                    InformPlayer(chatinfo.playerId, $"select a ship number from 1 to {shipsToBuyFromPosition.Length}");
+                    return;
+                }
+                number--;
+            }
+            else number = shipsToBuyFromPosition.Length - 1;
+
+            var buyship = shipsToBuyFromPosition[number];
+            buyship.Price = price;
+
+            Configuration.Save();
+        }
+
+        private async Task ShipRename(ChatInfo chatinfo, Dictionary<string, string> arguments)
+        {
+            var P = await Request_Player_Info(chatinfo.playerId.ToId());
+
+            var shipsToBuyFromPosition = Configuration.Current.Ships
+                .OrderBy(S => S.EntityType)
+                .OrderBy(S => S.DisplayName)
+                .Where(S => Distance(S.BuyLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance).ToArray();
+
+            if(shipsToBuyFromPosition.Length == 0)
+            {
+                InformPlayer(chatinfo.playerId, $"no ships available from this position prease go to a 'ship buy position'");
+                log($"Ship buy at wrong position {P.playfield} [X:{P.pos.x} Y:{P.pos.y} Z:{P.pos.z}] start", LogLevel.Message);
+                return;
+            }
+
+            if (int.TryParse(arguments["number"], out int number))
+            {
+                if (number <= 0 || number > shipsToBuyFromPosition.Length)
+                {
+                    InformPlayer(chatinfo.playerId, $"select a ship number from 1 to {shipsToBuyFromPosition.Length}");
+                    return;
+                }
+                number--;
+            }
+            else number = shipsToBuyFromPosition.Length - 1;
+
+            var buyship = shipsToBuyFromPosition[number];
+            buyship.DisplayName = arguments["name"];
+
+            Configuration.Save();
         }
 
         private async Task ShipGetSaleProfit(ChatInfo chatinfo)
