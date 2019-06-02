@@ -36,13 +36,13 @@ namespace EmpyrionShipBuying
             public string ShipDetails { get; set; }
             public double Price { get; set; }
             public string Seller { get; set; }
-            public int SellerId { get; set; }
+            public string SellerId { get; set; }
             public bool OnetimeTransaction { get; set; }
             public PlayfieldPositionRotation SpawnLocation { get; set; }
             public PlayfieldPosition BuyLocation { get; set; }
         }
 
         public List<ShipInfo> Ships { get; set; } = new List<ShipInfo>();
-        public Dictionary<int, double> SaleProfits { get; set; } = new Dictionary<int, double>();
+        public Dictionary<string, double> SaleProfits { get; set; } = new Dictionary<string, double>();
     }
 }

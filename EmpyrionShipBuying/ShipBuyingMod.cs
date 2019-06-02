@@ -115,14 +115,14 @@ namespace EmpyrionShipBuying
         {
             var P = await Request_Player_Info(chatinfo.playerId.ToId());
 
-            if (!Configuration.Current.SaleProfits.ContainsKey(P.entityId))
+            if (!Configuration.Current.SaleProfits.ContainsKey(P.steamId))
             {
                 InformPlayer(chatinfo.playerId, $"no sales profits found for you");
                 log($"No sales profit found for {P.playerName}", LogLevel.Message);
                 return;
             }
 
-            var profit = Configuration.Current.SaleProfits[P.entityId];
+            var profit = Configuration.Current.SaleProfits[P.steamId];
             await Request_Player_SetCredits(new IdCredits(P.entityId, P.credits + profit));
 
             InformPlayer(chatinfo.playerId, $"congratulations you get {profit} credits");
@@ -164,7 +164,7 @@ namespace EmpyrionShipBuying
 
             var buyship = shipsToBuyFromPosition[number];
 
-            if (!buy && buyship.SellerId == P.entityId) buyship.Price = (buyship.Price * Configuration.Current.CancelPercentageSaleFee) / 100;
+            if (!buy && buyship.SellerId == P.steamId) buyship.Price = (buyship.Price * Configuration.Current.CancelPercentageSaleFee) / 100;
 
             if (P.credits < buyship.Price)
             {
@@ -290,7 +290,7 @@ namespace EmpyrionShipBuying
                 Price               = price,
                 EntityType          = (EntityType)ship.type,
                 Seller              = P.playerName,
-                SellerId            = onetimeTransaction ? P.entityId : 0,
+                SellerId            = onetimeTransaction ? P.steamId : string.Empty,
                 StructureDirectoryOrEPBName = Path.GetFileName(targetDataDir),
                 SpawnLocation       = new PlayfieldPositionRotation() { playfield = P.playfield, pos = ship.pos, rot = ship.rot },
                 BuyLocation         = new PlayfieldPosition        () { playfield = P.playfield, pos = P.pos },
@@ -357,7 +357,7 @@ namespace EmpyrionShipBuying
                         .Aggregate(new { count = 0, line = "" }, (o, s) => new
                         {
                             count = o.count + 1,
-                            line  = o.line + $"[c][00ffff]{o.count + 1}:[-][/c] [c][ffffff][{s.EntityType}][-][/c] [c][00ff00]\"{s.DisplayName}\"[-][/c]{(s.SellerId == 0 ? "" : $" from [c][00ff00]{s.Seller}[-][/c]")} to buy at [[c][ff00ff]X:{(int)s.BuyLocation.pos.x} Y:{(int)s.BuyLocation.pos.y} Z:{(int)s.BuyLocation.pos.z}[-][/c]] for [c][ffffff]{s.Price}[-][/c] credits\n"
+                            line  = o.line + $"[c][00ffff]{o.count + 1}:[-][/c] [c][ffffff][{s.EntityType}][-][/c] [c][00ff00]\"{s.DisplayName}\"[-][/c]{(string.IsNullOrEmpty(s.SellerId) ? "" : $" from [c][00ff00]{s.Seller}[-][/c]")} to buy at [[c][ff00ff]X:{(int)s.BuyLocation.pos.x} Y:{(int)s.BuyLocation.pos.y} Z:{(int)s.BuyLocation.pos.z}[-][/c]] for [c][ffffff]{s.Price}[-][/c] credits\n"
                         })
                         .line)
             );
