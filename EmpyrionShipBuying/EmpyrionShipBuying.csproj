@@ -40,7 +40,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="EmpyrionNetAPI, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\EmpyrionNetAPI.3.1.6\lib\net461\EmpyrionNetAPI.dll</HintPath>
+      <HintPath>..\packages\EmpyrionNetAPI.4.0.1\lib\net461\EmpyrionNetAPI.dll</HintPath>
     </Reference>
     <Reference Include="Mif">
       <HintPath>..\dependencies\Mif.dll</HintPath>
@@ -62,7 +62,7 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="YamlDotNet, Version=6.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e, processorArchitecture=MSIL">
-      <HintPath>..\packages\YamlDotNet.6.0.0\lib\net45\YamlDotNet.dll</HintPath>
+      <HintPath>..\packages\YamlDotNet.6.1.1\lib\net45\YamlDotNet.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
