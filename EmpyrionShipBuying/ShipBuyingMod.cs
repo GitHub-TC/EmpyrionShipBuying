@@ -51,6 +51,7 @@ namespace EmpyrionShipBuying
             var P = await Request_Player_Info(chatinfo.playerId.ToId());
 
             var shipsToBuyFromPosition = Configuration.Current.Ships
+                .Where(S => S.BuyLocation.playfield == P.playfield)
                 .OrderBy(S => S.EntityType)
                 .OrderBy(S => S.DisplayName)
                 .Where(S => Distance(S.BuyLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance).ToArray();
@@ -84,6 +85,7 @@ namespace EmpyrionShipBuying
             var P = await Request_Player_Info(chatinfo.playerId.ToId());
 
             var shipsToBuyFromPosition = Configuration.Current.Ships
+                .Where(S => S.BuyLocation.playfield == P.playfield)
                 .OrderBy(S => S.EntityType)
                 .OrderBy(S => S.DisplayName)
                 .Where(S => Distance(S.BuyLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance).ToArray();
@@ -133,7 +135,9 @@ namespace EmpyrionShipBuying
         private async Task DisplayCatalog(int playerId)
         {
             var P = await Request_Player_Info(playerId.ToId());
-            await DisplayHelp(playerId, S => S.BuyLocation.playfield == P.playfield);
+            await DisplayHelp(playerId, S => 
+                S.BuyLocation.playfield == P.playfield && Distance(S.BuyLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance
+            );
         }
 
         private async Task ShipBuy(ChatInfo chatinfo, Dictionary<string, string> arguments, bool buy)
@@ -141,6 +145,7 @@ namespace EmpyrionShipBuying
             var P = await Request_Player_Info(chatinfo.playerId.ToId());
 
             var shipsToBuyFromPosition = Configuration.Current.Ships
+                .Where(S => S.BuyLocation.playfield == P.playfield)
                 .OrderBy(S => S.EntityType)
                 .OrderBy(S => S.DisplayName)
                 .Where(S => Distance(S.BuyLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance).ToArray();
@@ -353,6 +358,7 @@ namespace EmpyrionShipBuying
                     .Aggregate("", (p, g) => p + $"\n[c][00ffff]Ships at {g.Key}:[-][/c]\n" +
                         Configuration.Current.Ships
                         .Where(S => S.BuyLocation.playfield == g.Key)
+                        .Where(customSelector)
                         .OrderBy(S => S.EntityType)
                         .OrderBy(S => S.DisplayName)
                         .Aggregate(new { count = 0, line = "" }, (o, s) => new
