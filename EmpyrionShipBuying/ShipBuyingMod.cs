@@ -217,15 +217,15 @@ namespace EmpyrionShipBuying
 
             var SpawnInfo = new EntitySpawnInfo()
             {
-                forceEntityId   = NewID.id,
-                playfield       = ship.SpawnLocation.playfield,
-                pos             = ship.SpawnLocation.pos,
-                rot             = ship.SpawnLocation.rot,
-                name            = $"{ship.DisplayName} for {player.playerName}",
-                type            = (byte)ship.EntityType,
-                entityTypeName  = "", // 'Kommentare der Devs:  ...or set this to f.e. 'ZiraxMale', 'AlienCivilian1Fat', etc
-                factionGroup    = 1,
-                factionId       = player.entityId
+                forceEntityId       = NewID.id,
+                playfield           = ship.SpawnLocation.playfield,
+                pos                 = ship.SpawnLocation.pos,
+                rot                 = ship.SpawnLocation.rot,
+                name                = $"{ship.DisplayName} for {player.playerName}",
+                type                = (byte)ship.EntityType,
+                entityTypeName      = "", // 'Kommentare der Devs:  ...or set this to f.e. 'ZiraxMale', 'AlienCivilian1Fat', etc
+                factionGroup        = 1,
+                factionId           = player.entityId,
             };
 
             if (isEPBFile)
@@ -237,6 +237,9 @@ namespace EmpyrionShipBuying
             {
                 var SourceDir = Path.Combine(EmpyrionConfiguration.SaveGameModPath, "ShipsData", ship.StructureDirectoryOrEPBName);
                 var TargetDir = Path.Combine(EmpyrionConfiguration.SaveGamePath,    "Shared", $"{ship.EntityType}_Player_{NewID.id}");
+
+                var exportDat = Path.Combine(SourceDir, "Export.dat");
+                SpawnInfo.exportedEntityDat = File.Exists(exportDat) ? exportDat : null;
 
                 Directory.CreateDirectory(Path.GetDirectoryName(TargetDir));
                 CopyAll(new DirectoryInfo(SourceDir), new DirectoryInfo(TargetDir));
@@ -290,6 +293,17 @@ namespace EmpyrionShipBuying
 
             var sourceDataDir = Path.Combine(EmpyrionConfiguration.SaveGamePath,    "Shared", $"{(EntityType)ship.type}_Player_{ship.id}");
             var targetDataDir = Path.Combine(EmpyrionConfiguration.SaveGameModPath, "ShipsData", $"{(EntityType)ship.type}_{ship.id}");
+            var targetDataExportDat = Path.Combine(targetDataDir, "Export.dat");
+
+            Directory.CreateDirectory(targetDataDir);
+
+            await Request_Entity_Export(new EntityExportInfo()
+            {
+                id              = P.entityId,
+                playfield       = P.playfield,
+                filePath        = targetDataExportDat,
+                isForceUnload   = false,
+            });
 
             Configuration.Current.Ships.Add(new Configuration.ShipInfo() {
                 DisplayName         = ship.name,
