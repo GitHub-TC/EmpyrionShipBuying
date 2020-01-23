@@ -26,7 +26,7 @@ namespace EmpyrionShipBuying
         {
             GameAPI = dediAPI;
 
-            log("**EmpyrionShipBuying: loaded", LogLevel.Message);
+            Log("**EmpyrionShipBuying: loaded", LogLevel.Message);
 
             LoadConfiguration();
             LogLevel = Configuration.Current.LogLevel;
@@ -59,7 +59,7 @@ namespace EmpyrionShipBuying
             if (shipsToBuyFromPosition.Length == 0)
             {
                 InformPlayer(chatinfo.playerId, $"no ships available from this position prease go to a 'ship buy position'");
-                log($"Ship buy at wrong position {P.playfield} [X:{P.pos.x} Y:{P.pos.y} Z:{P.pos.z}] start", LogLevel.Message);
+                Log($"Ship buy at wrong position {P.playfield} [X:{P.pos.x} Y:{P.pos.y} Z:{P.pos.z}] start", LogLevel.Message);
                 return;
             }
 
@@ -93,7 +93,7 @@ namespace EmpyrionShipBuying
             if(shipsToBuyFromPosition.Length == 0)
             {
                 InformPlayer(chatinfo.playerId, $"no ships available from this position prease go to a 'ship buy position'");
-                log($"Ship buy at wrong position {P.playfield} [X:{P.pos.x} Y:{P.pos.y} Z:{P.pos.z}] start", LogLevel.Message);
+                Log($"Ship buy at wrong position {P.playfield} [X:{P.pos.x} Y:{P.pos.y} Z:{P.pos.z}] start", LogLevel.Message);
                 return;
             }
 
@@ -121,7 +121,7 @@ namespace EmpyrionShipBuying
             if (!Configuration.Current.SaleProfits.ContainsKey(P.steamId))
             {
                 InformPlayer(chatinfo.playerId, $"no sales profits found for you");
-                log($"No sales profit found for {P.playerName}", LogLevel.Message);
+                Log($"No sales profit found for {P.playerName}", LogLevel.Message);
                 return;
             }
 
@@ -129,7 +129,7 @@ namespace EmpyrionShipBuying
             await Request_Player_SetCredits(new IdCredits(P.entityId, P.credits + profit));
 
             InformPlayer(chatinfo.playerId, $"congratulations you get {profit} credits");
-            log($"Player get profit {P.playerName} => {profit}", LogLevel.Message);
+            Log($"Player get profit {P.playerName} => {profit}", LogLevel.Message);
         }
 
         private async Task DisplayCatalog(int playerId)
@@ -153,7 +153,7 @@ namespace EmpyrionShipBuying
             if(shipsToBuyFromPosition.Length == 0)
             {
                 InformPlayer(chatinfo.playerId, $"no ships to buy from this position prease go to a 'ship buy position'");
-                log($"Ship buy at wrong position {P.playfield} [X:{P.pos.x} Y:{P.pos.y} Z:{P.pos.z}] start", LogLevel.Message);
+                Log($"Ship buy at wrong position {P.playfield} [X:{P.pos.x} Y:{P.pos.y} Z:{P.pos.z}] start", LogLevel.Message);
                 return;
             }
 
@@ -183,14 +183,14 @@ namespace EmpyrionShipBuying
                 $"\"{buyship.DisplayName}\"\nfor [c][ffffff]{buyship.Price}[-][/c] Credits from {buyship.Seller}\n\n{buyship.ShipDetails}", "Yes", "No");
             if (answer.Id != P.entityId || answer.Value != 0) return;
 
-            log($"Ship buy {buyship.DisplayName} at {buyship.BuyLocation.playfield} start", LogLevel.Message);
+            Log($"Ship buy {buyship.DisplayName} at {buyship.BuyLocation.playfield} start", LogLevel.Message);
 
             await CreateStructure(buyship, P);
 
-            log($"Ship buy {P.playerName}: {P.credits} - {buyship.Price}", LogLevel.Message);
+            Log($"Ship buy {P.playerName}: {P.credits} - {buyship.Price}", LogLevel.Message);
             await Request_Player_SetCredits(new IdCredits(P.entityId, P.credits - buyship.Price));
 
-            log($"Ship buy {buyship.DisplayName} at {buyship.BuyLocation.playfield} complete", LogLevel.Message);
+            Log($"Ship buy {buyship.DisplayName} at {buyship.BuyLocation.playfield} complete", LogLevel.Message);
 
             if (buyship.TransactionType == TransactionType.PlayerToPlayer) {
                 Configuration.Current.Ships.Remove(buyship);
@@ -236,7 +236,7 @@ namespace EmpyrionShipBuying
             else
             {
                 var SourceDir = Path.Combine(EmpyrionConfiguration.SaveGameModPath, "ShipsData", ship.StructureDirectoryOrEPBName);
-                var TargetDir = Path.Combine(EmpyrionConfiguration.SaveGamePath,    "Shared", $"{ship.EntityType}_Player_{NewID.id}");
+                var TargetDir = Path.Combine(EmpyrionConfiguration.SaveGamePath,    "Shared", $"{NewID.id}");
 
                 var exportDat = Path.Combine(SourceDir, "Export.dat");
                 SpawnInfo.exportedEntityDat = File.Exists(exportDat) ? exportDat : null;
@@ -289,9 +289,9 @@ namespace EmpyrionShipBuying
             var answer = await ShowDialog(chatinfo.playerId, P, $"Are you sure you want to {(transactionType == TransactionType.PlayerToPlayer ? "sell" : "add")}", $"[c][00ff00]\"{ship.name}\"[-][/c] for [c][ffffff]{price}[-][/c] Credits?", "Yes", "No");
             if (answer.Id != P.entityId || answer.Value != 0) return;
 
-            log($"Ship sell {ship.id}/{ship.name} at {P.playfield} start", LogLevel.Message);
+            Log($"Ship sell {ship.id}/{ship.name} at {P.playfield} start", LogLevel.Message);
 
-            var sourceDataDir = Path.Combine(EmpyrionConfiguration.SaveGamePath,    "Shared", $"{(EntityType)ship.type}_Player_{ship.id}");
+            var sourceDataDir = Path.Combine(EmpyrionConfiguration.SaveGamePath,    "Shared", $"{ship.id}");
             var targetDataDir = Path.Combine(EmpyrionConfiguration.SaveGameModPath, "ShipsData", $"{(EntityType)ship.type}_{ship.id}");
             var targetDataExportDat = Path.Combine(targetDataDir, "Export.dat");
 
@@ -326,7 +326,7 @@ namespace EmpyrionShipBuying
 
             CopyAll(new DirectoryInfo(sourceDataDir), new DirectoryInfo(targetDataDir));
 
-            log($"Ship sell {ship.id}/{ship.name} at {P.playfield} complete", LogLevel.Message);
+            Log($"Ship sell {ship.id}/{ship.name} at {P.playfield} complete", LogLevel.Message);
         }
 
         public static void CopyAll(DirectoryInfo aSource, DirectoryInfo aTarget)
