@@ -38,7 +38,7 @@ namespace EmpyrionShipBuying
             ChatCommands.Add(new ChatCommand(@"ship sell (?<id>\d+) (?<price>\d+)",            (I, A) => ShipSell(I, A, TransactionType.PlayerToPlayer), "sell the ship with id (id) from your position", Configuration.Current.SellPermission));
             ChatCommands.Add(new ChatCommand(@"ship cancel (?<number>\d+)",                    (I, A) => ShipBuy (I, A, false), "get your ship back", Configuration.Current.SellPermission));
             ChatCommands.Add(new ChatCommand(@"ship add (?<id>\d+) (?<price>\d+)",             (I, A) => ShipSell(I, A, TransactionType.Catalog), "add the ship with id (id) from your position to the catalog", Configuration.Current.AddPermission));
-//            ChatCommands.Add(new ChatCommand(@"ship addstarter (?<id>\d+) (?<price>\d+)",      (I, A) => ShipSell(I, A, TransactionType.OneTimeSell), "add the ship with id (id) from your position to the catalog", Configuration.Current.AddPermission));
+            //ChatCommands.Add(new ChatCommand(@"ship addstarter (?<id>\d+) (?<price>\d+)",      (I, A) => ShipSell(I, A, TransactionType.OneTimeSell), "add the ship with id (id) from your position to the catalog", Configuration.Current.AddPermission));
             ChatCommands.Add(new ChatCommand(@"ship rename (?<number>\d+) (?<name>.+)",        (I, A) => ShipRename(I, A), "rename the ship with id (id) in the catalog", Configuration.Current.AddPermission));
             ChatCommands.Add(new ChatCommand(@"ship price (?<number>\d+) (?<price>\d+)",       (I, A) => ShipPrice(I, A), "set new price of the ship with id (id) in the catalog", Configuration.Current.AddPermission));
             ChatCommands.Add(new ChatCommand(@"ship profit",                                   (I, A) => ShipGetSaleProfit(I), "get your sale profit"));
@@ -213,7 +213,7 @@ namespace EmpyrionShipBuying
         {
             var NewID = await Request_NewEntityId();
 
-            var isEPBFile = string.Compare(Path.GetExtension(ship.StructureDirectoryOrEPBName), ".epb", StringComparison.InvariantCultureIgnoreCase) == 0;
+            var epbBackupFile = Path.Combine(EmpyrionConfiguration.SaveGameModPath, "ShipsData", ship.StructureDirectoryOrEPBName, "backup.epb");
 
             var SpawnInfo = new EntitySpawnInfo()
             {
@@ -228,10 +228,15 @@ namespace EmpyrionShipBuying
                 factionId           = player.entityId,
             };
 
-            if (isEPBFile)
+            if (File.Exists(epbBackupFile))
+            {
+                SpawnInfo.prefabName = "backup";
+                SpawnInfo.prefabDir  = Path.GetDirectoryName(epbBackupFile);
+            }
+            else if (string.Compare(Path.GetExtension(ship.StructureDirectoryOrEPBName), ".epb", StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 SpawnInfo.prefabName = Path.GetFileNameWithoutExtension (ship.StructureDirectoryOrEPBName);
-                SpawnInfo.prefabDir = Path.Combine(EmpyrionConfiguration.SaveGameModPath, "ShipsData");
+                SpawnInfo.prefabDir  = Path.Combine(EmpyrionConfiguration.SaveGameModPath, "ShipsData");
             }
             else
             {
@@ -239,6 +244,8 @@ namespace EmpyrionShipBuying
                 var TargetDir = Path.Combine(EmpyrionConfiguration.SaveGamePath,    "Shared", $"{NewID.id}");
 
                 var exportDat = Path.Combine(SourceDir, "Export.dat");
+                exportDat = File.Exists(exportDat) ? exportDat : Path.Combine(SourceDir, "ents.dat");
+
                 SpawnInfo.exportedEntityDat = File.Exists(exportDat) ? exportDat : null;
 
                 Directory.CreateDirectory(Path.GetDirectoryName(TargetDir));
@@ -286,7 +293,7 @@ namespace EmpyrionShipBuying
                 return;
             }
 
-            var answer = await ShowDialog(chatinfo.playerId, P, $"Are you sure you want to {(transactionType == TransactionType.PlayerToPlayer ? "sell" : "add")}", $"[c][00ff00]\"{ship.name}\"[-][/c] for [c][ffffff]{price}[-][/c] Credits?", "Yes", "No");
+            var answer = await ShowDialog(chatinfo.playerId, P, $"Are you sure you want to {(transactionType == TransactionType.PlayerToPlayer ? "sell" : "add")}", $"[c][00ff00]\"{ship.name}\"[-][/c] for [c][ffffff]{price}[-][/c] Credits?\n\n[c][ff0000]Note: Is the repair template up to date!![-][/c]\n", "Yes", "No");
             if (answer.Id != P.entityId || answer.Value != 0) return;
 
             Log($"Ship sell {ship.id}/{ship.name} at {P.playfield} start", LogLevel.Message);
@@ -296,14 +303,6 @@ namespace EmpyrionShipBuying
             var targetDataExportDat = Path.Combine(targetDataDir, "Export.dat");
 
             Directory.CreateDirectory(targetDataDir);
-
-            await Request_Entity_Export(new EntityExportInfo()
-            {
-                id              = P.entityId,
-                playfield       = P.playfield,
-                filePath        = targetDataExportDat,
-                isForceUnload   = false,
-            });
 
             Configuration.Current.Ships.Add(new Configuration.ShipInfo() {
                 DisplayName         = ship.name,
@@ -319,6 +318,15 @@ namespace EmpyrionShipBuying
             });
 
             Configuration.Save();
+
+
+            await Request_Entity_Export(new EntityExportInfo()
+            {
+                id              = P.entityId,
+                playfield       = P.playfield,
+                filePath        = targetDataExportDat,
+                isForceUnload   = false,
+            });
 
             await Request_Entity_Destroy(ship.id.ToId());
 
