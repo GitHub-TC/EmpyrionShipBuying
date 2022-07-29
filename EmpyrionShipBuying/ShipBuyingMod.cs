@@ -274,9 +274,7 @@ namespace EmpyrionShipBuying
                 return;
             }
 
-            var G = await Request_GlobalStructure_List();
-
-            var ship = SearchEntity(G, int.Parse(arguments["id"]));
+            var ship = await SearchEntity(int.Parse(arguments["id"]));
             if(ship.id == 0)
             {
                 InformPlayer(chatinfo.playerId, $"no ship found with id {arguments["id"]}");
@@ -350,16 +348,7 @@ namespace EmpyrionShipBuying
             });
         }
 
-        public static GlobalStructureInfo SearchEntity(GlobalStructureList aGlobalStructureList, int aSourceId)
-        {
-            foreach (var TestPlayfieldEntites in aGlobalStructureList.globalStructures)
-            {
-                var FoundEntity = TestPlayfieldEntites.Value.FirstOrDefault(E => E.id == aSourceId);
-                if (FoundEntity.id != 0) return FoundEntity;
-            }
-            return new GlobalStructureInfo();
-        }
-
+        public async Task<GlobalStructureInfo> SearchEntity(int aSourceId) => await Request_GlobalStructure_Info(aSourceId.ToId());
         private void LoadConfiguration()
         {
             Configuration = new ConfigurationManager<Configuration>() {
