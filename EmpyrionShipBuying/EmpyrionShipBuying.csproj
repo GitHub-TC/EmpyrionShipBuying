@@ -40,23 +40,27 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EmpyrionNetApi, Version=6.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\EmpyrionNetAPI.6.1.0\lib\net48\EmpyrionNetApi.dll</HintPath>
+    <Reference Include="EmpyrionNetApi, Version=6.2.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\EmpyrionNetAPI.6.2.2\lib\net48\EmpyrionNetApi.dll</HintPath>
     </Reference>
     <Reference Include="EmpyrionNetApiBroker, Version=1.0.2.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\EmpyrionNetAPI.6.1.0\lib\net48\EmpyrionNetApiBroker.dll</HintPath>
+      <HintPath>..\packages\EmpyrionNetAPI.6.2.2\lib\net48\EmpyrionNetApiBroker.dll</HintPath>
     </Reference>
     <Reference Include="EmpyrionNetApiDefinitions, Version=5.0.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\EmpyrionNetAPI.6.1.0\lib\net48\EmpyrionNetApiDefinitions.dll</HintPath>
+      <HintPath>..\packages\EmpyrionNetAPI.6.2.2\lib\net48\EmpyrionNetApiDefinitions.dll</HintPath>
     </Reference>
     <Reference Include="EmpyrionNetApiModBase, Version=1.0.2.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\EmpyrionNetAPI.6.1.0\lib\net48\EmpyrionNetApiModBase.dll</HintPath>
+      <HintPath>..\packages\EmpyrionNetAPI.6.2.2\lib\net48\EmpyrionNetApiModBase.dll</HintPath>
     </Reference>
-    <Reference Include="EmpyrionNetApiTools, Version=5.0.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\EmpyrionNetAPI.6.1.0\lib\net48\EmpyrionNetApiTools.dll</HintPath>
+    <Reference Include="EmpyrionNetApiTools, Version=5.0.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\EmpyrionNetAPI.6.2.2\lib\net48\EmpyrionNetApiTools.dll</HintPath>
     </Reference>
     <Reference Include="Mif">
       <HintPath>..\dependencies\Mif.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ModApi">
+      <HintPath>..\dependencies\ModApi.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">

@@ -6,13 +6,10 @@ using System.Collections.Generic;
 
 namespace EmpyrionShipBuying
 {
-    public class PlayfieldPosition
+    public class PlayfieldPositionRotation 
     {
         public string playfield { get; set; }
         public PVector3 pos { get; set; }
-    }
-    public class PlayfieldPositionRotation : PlayfieldPosition
-    {
         public PVector3 rot { get; set; }
     }
 
@@ -20,7 +17,7 @@ namespace EmpyrionShipBuying
     {
         Catalog,
         PlayerToPlayer,
-        OneTimeSell
+        CanOnlyBuyOnce
     }
 
     public class Configuration
@@ -32,7 +29,7 @@ namespace EmpyrionShipBuying
         public PermissionType SellPermission { get; set; } = PermissionType.Player;
         [JsonConverter(typeof(StringEnumConverter))]
         public PermissionType AddPermission { get; set; } = PermissionType.Moderator;
-        public int MaxBuyingPosDistance { get; set; } = 4;
+        public int MaxBuyingPosDistance { get; set; } = 500;
         public int CancelPercentageSaleFee { get; set; } = 10;
         public List<string> ForbiddenPlayfields { get; set; } = new List<string>();
         public class ShipInfo
@@ -48,7 +45,9 @@ namespace EmpyrionShipBuying
             [JsonConverter(typeof(StringEnumConverter))]
             public TransactionType TransactionType { get; set; }
             public PlayfieldPositionRotation SpawnLocation { get; set; }
-            public PlayfieldPosition BuyLocation { get; set; }
+            public int CurrentId { get; set; }
+            public List<string> PurchasedFromSteamId { get; set; } = new List<string>();
+
         }
 
         public List<ShipInfo> Ships { get; set; } = new List<ShipInfo>();
