@@ -232,7 +232,6 @@ namespace EmpyrionShipBuying
                     }
 
                     buyship.PurchasedFromSteamId.Add(P.steamId);
-                    Configuration.Save();
                 }
 
                 await CreateStructure(buyship, P, new PlayfieldPositionRotation() { playfield = P.playfield, pos = new PVector3(P.pos.x, P.pos.y + 100, P.pos.z) });
@@ -246,7 +245,7 @@ namespace EmpyrionShipBuying
             }
             else await CreateStructure(buyship, P, buyship.SpawnLocation);
 
-            Log($"Ship buy {P.playerName}: {P.credits} - {buyship.Price}", LogLevel.Message);
+            Log($"Ship buy {P.playerName}: {P.credits} - {buyship.Price} = {P.credits - buyship.Price}", LogLevel.Message);
             await Request_Player_SetCredits(new IdCredits(P.entityId, P.credits - buyship.Price));
 
             Log($"Ship buy {buyship.DisplayName} at {buyship.SpawnLocation.playfield} complete", LogLevel.Message);
@@ -319,7 +318,15 @@ namespace EmpyrionShipBuying
             Log($"Ship spawn {ship.DisplayName} name:{SpawnInfo.name} forceEntityId:{SpawnInfo.forceEntityId} playfield:{SpawnInfo.playfield} pos: x:{SpawnInfo.pos.x} y:{SpawnInfo.pos.y} z:{SpawnInfo.pos.z} exportedEntityDat:{SpawnInfo.exportedEntityDat} prefabName:{SpawnInfo.prefabName} prefabDir:{SpawnInfo.prefabDir} call", LogLevel.Message);
 
             await Request_Entity_Spawn(SpawnInfo);
-            await Request_Structure_Touch(NewID); // Sonst wird die Struktur sofort wieder gelöscht !!!
+            try
+            {
+                await Request_Structure_Touch(NewID); // Sonst wird die Struktur sofort wieder gelöscht !!!
+            }
+            catch (Exception error)
+            {
+                Log($"Request_Structure_Touch: {error}", LogLevel.Error);
+            }
+            
 
             return NewID.id;
         }
