@@ -181,7 +181,7 @@ namespace EmpyrionShipBuying
             var P = await Request_Player_Info(chatinfo.playerId.ToId());
 
             var shipsToBuyFromPosition = Configuration.Current.Ships
-                .Where(S => S.SpawnLocation.playfield == P.playfield)
+                .Where(S => S.SpawnLocation.playfield == P.playfield || S.TransactionType == TransactionType.CanOnlyBuyOnce)
                 .OrderBy(S => S.EntityType)
                 .OrderBy(S => S.DisplayName)
                 .Where(S => S.TransactionType == TransactionType.CanOnlyBuyOnce || Distance(S.SpawnLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance).ToArray();
@@ -264,7 +264,7 @@ namespace EmpyrionShipBuying
 
             Configuration.Save();
 
-            await ShowDialog(chatinfo.playerId, P, "Congratulations", $"your new ship \"{buyship.DisplayName} for {P.playerName}\" is ready for pick-up at  {buyship.SpawnLocation.playfield}[X:{(int)buyship.SpawnLocation.pos.x} Y:{(int)buyship.SpawnLocation.pos.y} Z:{(int)buyship.SpawnLocation.pos.z}]");
+            await ShowDialog(chatinfo.playerId, P, "Congratulations", $"your new ship \"{buyship.DisplayName} for {P.playerName}\" is ready for pick-up at {(buyship.TransactionType == TransactionType.CanOnlyBuyOnce ? " your position " : buyship.SpawnLocation.playfield)}[X:{(int)buyship.SpawnLocation.pos.x} Y:{(int)buyship.SpawnLocation.pos.y} Z:{(int)buyship.SpawnLocation.pos.z}]");
         }
 
         public async Task<int> CreateStructure(ShipInfo ship, PlayerInfo player, PlayfieldPositionRotation spawnPoint)
@@ -448,7 +448,7 @@ namespace EmpyrionShipBuying
                         .Aggregate(new { count = 0, line = "" }, (o, s) => new
                         {
                             count = o.count + 1,
-                            line  = o.line + $"[c][00ffff]{o.count + 1}:[-][/c] [c][ffffff][{s.EntityType}][-][/c] [c][00ff00]\"{s.DisplayName}\"[-][/c]{(string.IsNullOrEmpty(s.SellerSteamId) ? "" : $" from [c][00ff00]{s.Seller}[-][/c]")} {(s.TransactionType == TransactionType.CanOnlyBuyOnce ? "one-time purchase " : $"near to buy at [[c][ff00ff]X:{(int)s.SpawnLocation.pos.x} Y:{(int)s.SpawnLocation.pos.y} Z:{(int)s.SpawnLocation.pos.z}[-][/c]]")} for [c][ffffff]{s.Price}[-][/c] credits\n"
+                            line  = o.line + $"[c][00ffff]{o.count + 1}:[-][/c] [c][ffffff][{s.EntityType}][-][/c] [c][00ff00]\"{s.DisplayName}\"[-][/c]{(string.IsNullOrEmpty(s.SellerSteamId) ? "" : $" from [c][00ff00]{s.Seller}[-][/c]")} {(s.TransactionType == TransactionType.CanOnlyBuyOnce ? "one-time purchase from everyware " : $"near to buy at [[c][ff00ff]X:{(int)s.SpawnLocation.pos.x} Y:{(int)s.SpawnLocation.pos.y} Z:{(int)s.SpawnLocation.pos.z}[-][/c]]")} for [c][ffffff]{s.Price}[-][/c] credits\n"
                         })
                         .line)
             );
