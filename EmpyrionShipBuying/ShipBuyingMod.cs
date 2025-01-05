@@ -441,7 +441,7 @@ namespace EmpyrionShipBuying
                     .GroupBy(S => S.SpawnLocation.playfield)
                     .Aggregate("", (p, g) => p + $"\n[c][00ffff]Ships at {g.Key}:[-][/c]\n" +
                         Configuration.Current.Ships
-                        .Where(S => S.SpawnLocation.playfield == g.Key)
+                        .Where(S => S.SpawnLocation.playfield == g.Key || S.TransactionType == TransactionType.CanOnlyBuyOnce)
                         .Where(customSelector)
                         .OrderBy(S => S.EntityType)
                         .OrderBy(S => S.DisplayName)
