@@ -34,6 +34,8 @@ namespace EmpyrionShipBuying
         public List<string> ForbiddenPlayfields { get; set; } = new List<string>();
         public class ShipInfo
         {
+            [JsonIgnore]
+            public int BuyId { get; set; }
             public string DisplayName { get; set; }
             [JsonConverter(typeof(StringEnumConverter))]
             public EntityType EntityType { get; set; }

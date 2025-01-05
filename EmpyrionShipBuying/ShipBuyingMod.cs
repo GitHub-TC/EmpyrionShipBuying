@@ -44,7 +44,26 @@ namespace EmpyrionShipBuying
             ChatCommands.Add(new ChatCommand(@"ship addstarter (?<id>\d+) (?<price>\d+)",      (I, A) => ShipSell(I, A, TransactionType.CanOnlyBuyOnce), "add the ship with id (id) to the catalog which each player can only buy once", Configuration.Current.AddPermission));
             ChatCommands.Add(new ChatCommand(@"ship rename (?<number>\d+) (?<name>.+)",        (I, A) => ShipRename(I, A), "rename the ship with id (id) in the catalog", Configuration.Current.AddPermission));
             ChatCommands.Add(new ChatCommand(@"ship price (?<number>\d+) (?<price>\d+)",       (I, A) => ShipPrice(I, A), "set new price of the ship with id (id) in the catalog", Configuration.Current.AddPermission));
+            ChatCommands.Add(new ChatCommand(@"ship remove (?<number>\d+)",                    (I, A) => ShipRemove(I, A), "remove a ship with id (id) from the catalog", Configuration.Current.AddPermission));
             ChatCommands.Add(new ChatCommand(@"ship profit",                                   (I, A) => ShipGetSaleProfit(I), "get your sale profit"));
+        }
+
+        private Task ShipRemove(ChatInfo chatinfo, Dictionary<string, string> arguments)
+        {
+            var buyship = GetShipFromBuyId(arguments, Configuration.Current.Ships);
+            if (buyship == null)
+            {
+                InformPlayer(chatinfo.playerId, $"select a ship number");
+                return Task.CompletedTask;
+            }
+
+            Configuration.Current.Ships.Remove(buyship);
+            try { Directory.Delete(Path.Combine(EmpyrionConfiguration.SaveGameModPath, "ShipsData", buyship.StructureDirectoryOrEPBName), true); } catch { }
+
+            Configuration.Save();
+            EnumShipBuyIDs();
+
+            return Task.CompletedTask;
         }
 
         private async void ShipBuyingMod_Event_Entity_PosAndRot(IdPositionRotation obj)
@@ -58,6 +77,7 @@ namespace EmpyrionShipBuying
                 {
                     found.CurrentId = await CreateStructure(found, new PlayerInfo(), found.SpawnLocation);
                     Configuration.Save();
+                    EnumShipBuyIDs();
                     return;
                 }
 
@@ -86,68 +106,34 @@ namespace EmpyrionShipBuying
 
             var P = await Request_Player_Info(chatinfo.playerId.ToId());
 
-            var shipsToBuyFromPosition = Configuration.Current.Ships
-                .Where(S => S.SpawnLocation.playfield == P.playfield)
-                .OrderBy(S => S.EntityType)
-                .OrderBy(S => S.DisplayName)
-                .Where(S => Distance(S.SpawnLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance).ToArray();
-
-            if (shipsToBuyFromPosition.Length == 0)
+            var buyship = GetShipFromBuyId(arguments, Configuration.Current.Ships);
+            if (buyship == null)
             {
-                InformPlayer(chatinfo.playerId, $"no ships available from this position prease go nearer to a 'ship position'");
-                Log($"Ship buy to far away position {P.playfield} [X:{P.pos.x} Y:{P.pos.y} Z:{P.pos.z}] start", LogLevel.Message);
+                InformPlayer(chatinfo.playerId, $"select a ship number");
                 return;
             }
 
-            if (int.TryParse(arguments["number"], out int number))
-            {
-                if (number <= 0 || number > shipsToBuyFromPosition.Length)
-                {
-                    InformPlayer(chatinfo.playerId, $"select a ship number from 1 to {shipsToBuyFromPosition.Length}");
-                    return;
-                }
-                number--;
-            }
-            else number = shipsToBuyFromPosition.Length - 1;
-
-            var buyship = shipsToBuyFromPosition[number];
             buyship.Price = price;
 
             Configuration.Save();
+            EnumShipBuyIDs();
         }
 
         private async Task ShipRename(ChatInfo chatinfo, Dictionary<string, string> arguments)
         {
             var P = await Request_Player_Info(chatinfo.playerId.ToId());
 
-            var shipsToBuyFromPosition = Configuration.Current.Ships
-                .Where(S => S.SpawnLocation.playfield == P.playfield)
-                .OrderBy(S => S.EntityType)
-                .OrderBy(S => S.DisplayName)
-                .Where(S => Distance(S.SpawnLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance).ToArray();
-
-            if(shipsToBuyFromPosition.Length == 0)
+            var buyship = GetShipFromBuyId(arguments, Configuration.Current.Ships);
+            if (buyship == null)
             {
-                InformPlayer(chatinfo.playerId, $"no ships available from this position prease go to a 'ship buy position'");
-                Log($"Ship buy at wrong position {P.playfield} [X:{P.pos.x} Y:{P.pos.y} Z:{P.pos.z}] start", LogLevel.Message);
+                InformPlayer(chatinfo.playerId, $"select a ship number");
                 return;
             }
 
-            if (int.TryParse(arguments["number"], out int number))
-            {
-                if (number <= 0 || number > shipsToBuyFromPosition.Length)
-                {
-                    InformPlayer(chatinfo.playerId, $"select a ship number from 1 to {shipsToBuyFromPosition.Length}");
-                    return;
-                }
-                number--;
-            }
-            else number = shipsToBuyFromPosition.Length - 1;
-
-            var buyship = shipsToBuyFromPosition[number];
             buyship.DisplayName = arguments["name"];
 
             Configuration.Save();
+            EnumShipBuyIDs();
         }
 
         private async Task ShipGetSaleProfit(ChatInfo chatinfo)
@@ -172,7 +158,7 @@ namespace EmpyrionShipBuying
         {
             var P = await Request_Player_Info(playerId.ToId());
             await DisplayHelp(playerId, S => 
-                (S.SpawnLocation.playfield == P.playfield && Distance(S.SpawnLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance) || S.TransactionType == TransactionType.CanOnlyBuyOnce
+                (S.SpawnLocation.playfield == P.playfield && Distance(S.SpawnLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance)
             );
         }
 
@@ -187,25 +173,20 @@ namespace EmpyrionShipBuying
                 .OrderBy(S => S.DisplayName)
                 .Where(S => S.TransactionType == TransactionType.CanOnlyBuyOnce || Distance(S.SpawnLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance).ToArray();
 
-            if(shipsToBuyFromPosition.Length == 0)
+            if (shipsToBuyFromPosition.Length == 0)
             {
                 InformPlayer(chatinfo.playerId, $"no ships to buy from this position prease go to a 'ship buy position'");
                 Log($"Ship buy at wrong position {P.playfield} [X:{P.pos.x} Y:{P.pos.y} Z:{P.pos.z}] start", LogLevel.Message);
                 return;
             }
 
-            if (int.TryParse(arguments["number"], out int number))
-            {
-                if(number <= 0 || number > shipsToBuyFromPosition.Length)
-                {
-                    InformPlayer(chatinfo.playerId, $"select a ship number from 1 to {shipsToBuyFromPosition.Length}");
-                    return;
-                }
-                number--;
-            }
-            else number = shipsToBuyFromPosition.Length - 1;
+            var buyship = GetShipFromBuyId(arguments, shipsToBuyFromPosition);
 
-            var buyship = shipsToBuyFromPosition[number];
+            if (buyship == null)
+            {
+                InformPlayer(chatinfo.playerId, $"select a ship number");
+                return;
+            }
 
             if (!buy && buyship.SellerSteamId == P.steamId) buyship.Price = (buyship.Price * Configuration.Current.CancelPercentageSaleFee) / 100;
 
@@ -215,8 +196,8 @@ namespace EmpyrionShipBuying
                 return;
             }
 
-            var answer = await ShowDialog(chatinfo.playerId, P, 
-                $"Are you sure you want to buy this Ship", 
+            var answer = await ShowDialog(chatinfo.playerId, P,
+                $"Are you sure you want to buy this Ship",
                 $"\"{buyship.DisplayName}\"\nfor [c][ffffff]{buyship.Price}[-][/c] Credits from {buyship.Seller}\n\n{buyship.ShipDetails}", "Yes", "No");
             if (answer.Id != P.entityId || answer.Value != 0) return;
 
@@ -224,7 +205,7 @@ namespace EmpyrionShipBuying
 
             if ((buyship.TransactionType == TransactionType.Catalog && buyship.SpawnLocation.playfield != P.playfield) || buyship.TransactionType == TransactionType.CanOnlyBuyOnce)
             {
-                if(buyship.TransactionType == TransactionType.CanOnlyBuyOnce)
+                if (buyship.TransactionType == TransactionType.CanOnlyBuyOnce)
                 {
                     if (buyship.PurchasedFromSteamId.Contains(P.steamId))
                     {
@@ -251,7 +232,8 @@ namespace EmpyrionShipBuying
 
             Log($"Ship buy {buyship.DisplayName} at {buyship.SpawnLocation.playfield} complete", LogLevel.Message);
 
-            if (buyship.TransactionType == TransactionType.PlayerToPlayer) {
+            if (buyship.TransactionType == TransactionType.PlayerToPlayer)
+            {
                 Configuration.Current.Ships.Remove(buyship);
 
                 if (buy)
@@ -264,9 +246,15 @@ namespace EmpyrionShipBuying
             }
 
             Configuration.Save();
+            EnumShipBuyIDs();
 
             await ShowDialog(chatinfo.playerId, P, "Congratulations", $"your new ship \"{buyship.DisplayName} for {P.playerName}\" is ready for pick-up at {(buyship.TransactionType == TransactionType.CanOnlyBuyOnce ? " your position " : buyship.SpawnLocation.playfield)}[X:{(int)buyship.SpawnLocation.pos.x} Y:{(int)buyship.SpawnLocation.pos.y} Z:{(int)buyship.SpawnLocation.pos.z}]");
         }
+
+        private static ShipInfo GetShipFromBuyId(Dictionary<string, string> arguments, IEnumerable<ShipInfo> shipsToBuyFromPosition) 
+            => int.TryParse(arguments["number"], out int number)
+                ? shipsToBuyFromPosition.FirstOrDefault(s => s.BuyId == number)
+                : null;
 
         public async Task<int> CreateStructure(ShipInfo ship, PlayerInfo player, PlayfieldPositionRotation spawnPoint)
         {
@@ -389,7 +377,7 @@ namespace EmpyrionShipBuying
             });
 
             Configuration.Save();
-
+            EnumShipBuyIDs();
 
             await Request_Entity_Export(new EntityExportInfo()
             {
@@ -425,12 +413,27 @@ namespace EmpyrionShipBuying
         public async Task<GlobalStructureInfo> SearchEntity(int aSourceId) => await Request_GlobalStructure_Info(aSourceId.ToId());
         private void LoadConfiguration()
         {
-            Configuration = new ConfigurationManager<Configuration>() {
+            Configuration = new ConfigurationManager<Configuration>()
+            {
                 ConfigFilename = Path.Combine(EmpyrionConfiguration.SaveGameModPath, "ShipConfigurations.json")
             };
 
+            Configuration.ConfigFileLoaded += (s, e) => EnumShipBuyIDs();
+
             Configuration.Load();
             Configuration.Save();
+        }
+
+        private void EnumShipBuyIDs()
+        {
+            int i = 1;
+            Configuration.Current.Ships
+                .OrderByDescending(S => S.TransactionType)
+                .ThenBy(S => S.SpawnLocation.playfield)
+                .ThenBy(S => S.EntityType)
+                .ThenBy(S => S.DisplayName)
+                .ToList()
+                .ForEach(ship => ship.BuyId = i++);
         }
 
         private async Task DisplayHelp(int aPlayerId, Func<ShipInfo, bool> customSelector)
@@ -440,19 +443,18 @@ namespace EmpyrionShipBuying
                     .Where(customSelector)
                     .OrderBy(S => S.SpawnLocation.playfield)
                     .GroupBy(S => S.SpawnLocation.playfield)
-                    .Aggregate("", (p, g) => p + $"\n[c][00ffff]Ships at {g.Key}:[-][/c]\n" +
-                        Configuration.Current.Ships
-                        .Where(S => S.SpawnLocation.playfield == g.Key || S.TransactionType == TransactionType.CanOnlyBuyOnce)
-                        .Where(customSelector)
-                        .OrderByDescending(S => S.TransactionType)
+                    .Aggregate(Configuration.Current.Ships
+                        .Where(S => S.TransactionType == TransactionType.CanOnlyBuyOnce)
                         .OrderBy(S => S.EntityType)
                         .OrderBy(S => S.DisplayName)
-                        .Aggregate(new { count = 0, line = "" }, (o, s) => new
-                        {
-                            count = o.count + 1,
-                            line  = o.line + $"[c][00ffff]{o.count + 1}:[-][/c] [c][ffffff][{s.EntityType}][-][/c] [c][00ff00]\"{s.DisplayName}\"[-][/c]{(string.IsNullOrEmpty(s.SellerSteamId) ? "" : $" from [c][00ff00]{s.Seller}[-][/c]")} {(s.TransactionType == TransactionType.CanOnlyBuyOnce ? "one-time purchase from everyware " : $"near to buy at [[c][ff00ff]X:{(int)s.SpawnLocation.pos.x} Y:{(int)s.SpawnLocation.pos.y} Z:{(int)s.SpawnLocation.pos.z}[-][/c]]")} for [c][ffffff]{s.Price}[-][/c] credits\n"
-                        })
-                        .line)
+                            .Aggregate($"\n[c][00ffff]Starterships:[-][/c]\n", (l, s) => l + $"[c][00ffff]{s.BuyId}:[-][/c] [c][ffffff][{s.EntityType}][-][/c] [c][00ff00]\"{s.DisplayName}\"[-][/c]{(string.IsNullOrEmpty(s.SellerSteamId) ? "" : $" from [c][00ff00]{s.Seller}[-][/c]")} {(s.TransactionType == TransactionType.CanOnlyBuyOnce ? "one-time purchase from everyware " : $"near to buy at [[c][ff00ff]X:{(int)s.SpawnLocation.pos.x} Y:{(int)s.SpawnLocation.pos.y} Z:{(int)s.SpawnLocation.pos.z}[-][/c]]")} for [c][ffffff]{s.Price}[-][/c] credits\n")
+                        , 
+                        (p, g) => Configuration.Current.Ships
+                        .Where(S => S.SpawnLocation.playfield == g.Key && S.TransactionType != TransactionType.CanOnlyBuyOnce)
+                        .OrderBy(S => S.EntityType)
+                        .OrderBy(S => S.DisplayName)
+                            .Aggregate(p + $"\n[c][00ffff]Ships at {g.Key}:[-][/c]\n", (l, s) => l + $"[c][00ffff]{s.BuyId}:[-][/c] [c][ffffff][{s.EntityType}][-][/c] [c][00ff00]\"{s.DisplayName}\"[-][/c]{(string.IsNullOrEmpty(s.SellerSteamId) ? "" : $" from [c][00ff00]{s.Seller}[-][/c]")} {(s.TransactionType == TransactionType.CanOnlyBuyOnce ? "one-time purchase from everyware " : $"near to buy at [[c][ff00ff]X:{(int)s.SpawnLocation.pos.x} Y:{(int)s.SpawnLocation.pos.y} Z:{(int)s.SpawnLocation.pos.z}[-][/c]]")} for [c][ffffff]{s.Price}[-][/c] credits\n")
+                    )
             );
         }
 
