@@ -172,7 +172,7 @@ namespace EmpyrionShipBuying
         {
             var P = await Request_Player_Info(playerId.ToId());
             await DisplayHelp(playerId, S => 
-                S.SpawnLocation.playfield == P.playfield && Distance(S.SpawnLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance
+                (S.SpawnLocation.playfield == P.playfield && Distance(S.SpawnLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance) || S.TransactionType == TransactionType.CanOnlyBuyOnce
             );
         }
 
@@ -182,6 +182,7 @@ namespace EmpyrionShipBuying
 
             var shipsToBuyFromPosition = Configuration.Current.Ships
                 .Where(S => S.SpawnLocation.playfield == P.playfield || S.TransactionType == TransactionType.CanOnlyBuyOnce)
+                .OrderByDescending(S => S.TransactionType)
                 .OrderBy(S => S.EntityType)
                 .OrderBy(S => S.DisplayName)
                 .Where(S => S.TransactionType == TransactionType.CanOnlyBuyOnce || Distance(S.SpawnLocation.pos, P.pos) <= Configuration.Current.MaxBuyingPosDistance).ToArray();
@@ -443,6 +444,7 @@ namespace EmpyrionShipBuying
                         Configuration.Current.Ships
                         .Where(S => S.SpawnLocation.playfield == g.Key || S.TransactionType == TransactionType.CanOnlyBuyOnce)
                         .Where(customSelector)
+                        .OrderByDescending(S => S.TransactionType)
                         .OrderBy(S => S.EntityType)
                         .OrderBy(S => S.DisplayName)
                         .Aggregate(new { count = 0, line = "" }, (o, s) => new
